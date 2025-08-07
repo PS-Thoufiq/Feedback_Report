@@ -1,10 +1,10 @@
 /* pdfUtils.jsx */
 import axios from 'axios';
 
-// Azure OpenAI Configuration (Updated with provided values)
+// Azure OpenAI Configuration
 const AZURE_OPENAI_API_KEY = '27bf9a2345b0467cb0017d028c687ff0';
 const AZURE_OPENAI_ENDPOINT = 'https://zeero.openai.azure.com';
-const AZURE_DEPLOYMENT_NAME = 'zeero-prod';  // Updated deployment name
+const AZURE_DEPLOYMENT_NAME = 'zeero-prod';
 const AZURE_API_VERSION = '2024-02-15-preview';
 const AZURE_OPENAI_URL = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${encodeURIComponent(AZURE_DEPLOYMENT_NAME)}/chat/completions?api-version=${AZURE_API_VERSION}`;
 
@@ -89,7 +89,7 @@ export const evaluateWithOpenAI = async (text, interviewDate) => {
           messages: [
             {
               role: 'system',
-              content: 'You are an AI assistant that analyzes interview feedback and returns a structured evaluation in JSON format. Ensure all required fields are present and valid.',
+              content: 'You are an AI assistant that analyzes interview feedback and returns a structured evaluation in JSON format. Extract and evaluate exactly 10 Technical Skills, 4 Soft Skills, 6 Strengths, and 6 Areas for Improvement from the feedback. If the feedback contains fewer items, infer additional relevant content based on context (e.g., technical skills like "Python" or soft skills like "Communication") with reasonable ratings (1-5) and 3-line evidence for skills, or 2-line descriptions for Strengths and Areas. Only use placeholders (e.g., "Unnamed Skill" or "Inferred Point") if no valid inference is possible after exhausting context. Ensure all required fields are present and valid.',
             },
             {
               role: 'user',
@@ -101,8 +101,8 @@ export const evaluateWithOpenAI = async (text, interviewDate) => {
   "Summary": "<200+ word summary starting with '{Name}, evaluated on {Month DD, YYYY} is a...'>",
   "Strengths": ["<Point 1>", "<Point 2>"],
   "Areas for Improvement": ["<Point 1>", "<Point 2>"],
-  "Technical Skills": [{"Section": "<Skill>", "rating": <1-5>, "comments": "<Evidence>"}],
-  "Soft Skills": [{"Section": "<Skill>", "rating": <1-5>, "evidence": "<Evidence>"}]
+  "Technical Skills": [{"Section": "<Skill>", "rating": <1-5>, "comments": "<Evidence>3 lines"}],
+  "Soft Skills": [{"Section": "<Skill>", "rating": <1-5>, "evidence": "<Evidence> 3 lines "}]
 }
 Feedback:
 ${text}`
@@ -137,7 +137,7 @@ ${text}`
       throw new Error('Failed to parse Azure response as JSON');
     }
 
-    // Validate the evaluation response
+    // Validate and ensure minimum item counts with inferred data
     const requiredFields = [
       'Candidate Name',
       'Role',
@@ -160,35 +160,40 @@ ${text}`
       };
     }
 
-    if (!Array.isArray(evaluation['Strengths'])) {
-      console.warn('Strengths is not an array, setting to empty array');
-      evaluation['Strengths'] = [];
-    }
-    if (!Array.isArray(evaluation['Areas for Improvement'])) {
-      console.warn('Areas for Improvement is not an array, setting to empty array');
-      evaluation['Areas for Improvement'] = [];
-    }
-    if (!Array.isArray(evaluation['Technical Skills'])) {
-      console.warn('Technical Skills is not an array, setting to empty array');
-      evaluation['Technical Skills'] = [];
-    }
-    if (!Array.isArray(evaluation['Soft Skills'])) {
-      console.warn('Soft Skills is not an array, setting to empty array');
-      evaluation['Soft Skills'] = [];
+    if (!Array.isArray(evaluation['Technical Skills'])) evaluation['Technical Skills'] = [];
+    while (evaluation['Technical Skills'].length < 10) {
+      const inferredSkill = inferSkillFromContext(evaluation, 'Technical');
+      evaluation['Technical Skills'].push(inferredSkill);
     }
 
-    // Normalize ratings
-    evaluation['Technical Skills'] = evaluation['Technical Skills'].map(skill => ({
+    if (!Array.isArray(evaluation['Soft Skills'])) evaluation['Soft Skills'] = [];
+    while (evaluation['Soft Skills'].length < 4) {
+      const inferredSkill = inferSkillFromContext(evaluation, 'Soft');
+      evaluation['Soft Skills'].push(inferredSkill);
+    }
+
+    if (!Array.isArray(evaluation.Strengths)) evaluation.Strengths = [];
+    while (evaluation.Strengths.length < 6) {
+      evaluation.Strengths.push(`Inferred Strength ${evaluation.Strengths.length + 1}: Inferred based on role context.\nAdditional inferred detail.`);
+    }
+
+    if (!Array.isArray(evaluation['Areas for Improvement'])) evaluation['Areas for Improvement'] = [];
+    while (evaluation['Areas for Improvement'].length < 6) {
+      evaluation['Areas for Improvement'].push(`Inferred Area ${evaluation['Areas for Improvement'].length + 1}: Inferred based on role context.\nAdditional inferred detail.`);
+    }
+
+    // Normalize ratings and ensure valid content
+    evaluation['Technical Skills'] = evaluation['Technical Skills'].map((skill, index) => ({
       ...skill,
-      Section: skill.Section || 'Unnamed Skill',
+      Section: skill.Section || `Inferred Skill ${index + 1}`,
       rating: Math.min(Math.max(Number(skill.rating) || 3, 1), 5),
-      comments: skill.comments || skill.evidence || 'No details provided',
+      comments: skill.comments || skill.evidence || 'Inferred from context: Limited details available',
     }));
-    evaluation['Soft Skills'] = evaluation['Soft Skills'].map(skill => ({
+    evaluation['Soft Skills'] = evaluation['Soft Skills'].map((skill, index) => ({
       ...skill,
-      Section: skill.Section || 'Unnamed Skill',
+      Section: skill.Section || `Inferred Skill ${index + 1}`,
       rating: Math.min(Math.max(Number(skill.rating) || 3, 1), 5),
-      evidence: skill.evidence || skill.comments || 'No details provided',
+      evidence: skill.evidence || skill.comments || 'Inferred from context: Limited details available',
     }));
 
     console.log('Validated evaluation:', JSON.stringify(evaluation, null, 2));
@@ -197,4 +202,20 @@ ${text}`
     console.error('Error in evaluateWithOpenAI:', error);
     throw new Error(`Evaluation failed: ${error.message}`);
   }
+};
+
+// Helper function to infer skills from context
+const inferSkillFromContext = (evaluation, skillType) => {
+  const commonSkills = {
+    Technical: ['Python', 'Java', 'JavaScript', 'C++', 'SQL', 'HTML', 'CSS', 'React', 'Node.js', 'Docker'],
+    Soft: ['Communication', 'Teamwork', 'Problem Solving', 'Adaptability'],
+  };
+  const usedSkills = (evaluation[`${skillType} Skills`] || []).map(s => s.Section.toLowerCase());
+  const availableSkills = commonSkills[skillType].filter(s => !usedSkills.includes(s.toLowerCase()));
+  const skill = availableSkills.length > 0 ? availableSkills[0] : `Inferred ${skillType} Skill ${usedSkills.length + 1}`;
+  return {
+    Section: skill,
+    rating: 3,
+    [skillType === 'Technical' ? 'comments' : 'evidence']: `Inferred from context: ${skill} assumed based on role ${evaluation.Role || 'unknown'}.\nThis is an inferred skill with limited evidence.\nAdditional context not available.`,
+  };
 };

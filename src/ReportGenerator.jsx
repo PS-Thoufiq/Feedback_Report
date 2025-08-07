@@ -1,10 +1,9 @@
 /* ReportGenerator.jsx */
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import generatePDF from 'react-to-pdf';
-import { Grid, Card, Box, Typography } from '@mui/material';
+import { Grid, Card, Box, Typography, Slider } from '@mui/material';
 import './ReportGenerator.scss';
-import Slider from '@mui/material/Slider';
-
+import logo from "./assets/zeero-logo.svg";
 
 // Rating labels and colors
 const ratingLabels = {
@@ -28,11 +27,6 @@ const formatDate = (dateString) => {
 };
 
 const ReportGenerator = ({ evaluation }) => {
-  // Log evaluation object for debugging
-  useEffect(() => {
-    console.log('ReportGenerator received evaluation:', JSON.stringify(evaluation, null, 2));
-  }, [evaluation]);
-
   const [excludeForPdf, setExcludeForPdf] = useState(false);
 
   // PDF generation options
@@ -60,7 +54,7 @@ const ReportGenerator = ({ evaluation }) => {
   const strengths = Array.isArray(evaluation.Strengths) ? evaluation.Strengths : [];
   const areasForImprovement = Array.isArray(evaluation['Areas for Improvement']) ? evaluation['Areas for Improvement'] : [];
 
-  // Split skills into chunks of 8 for pagination
+  // Split skills into chunks for pagination - no padding
   const chunkArray = (array, size) => {
     const chunks = [];
     for (let i = 0; i < array.length; i += size) {
@@ -69,89 +63,166 @@ const ReportGenerator = ({ evaluation }) => {
     return chunks;
   };
 
-  const technicalSkillsPages = chunkArray(technicalSkills, 8);
-  const softSkillsPages = chunkArray(softSkills, 8);
+  const technicalSkillsPages = chunkArray(technicalSkills.filter(skill => skill.Section), 10);
+  const softSkillsPages = chunkArray(softSkills.filter(skill => skill.Section), 4);
+
+  // Function to split text into 3-4 lines
+  const splitIntoLines = (text, maxLines = 4) => {
+    if (!text) return Array(maxLines).fill('');
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = '';
+    for (const word of words) {
+      if ((currentLine + ' ' + word).length <= 50 && lines.length < maxLines - 1) {
+        currentLine += (currentLine ? ' ' : '') + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+    if (currentLine) lines.push(currentLine);
+    while (lines.length < maxLines) lines.push('');
+    return lines;
+  };
 
   return (
     <div className="report-container" ref={pageInput}>
       {/* Header */}
-      <div className="dev-report-header-container">
+      <div className="dev-report-header-container" style={{ pageBreakAfter: 'avoid' }}>
         <div className="personal">
           <div className="name">{evaluation['Candidate Name'] || 'Unknown'}</div>
           <div className="submit">Submitted on</div>
           <div className="date">{formatDate(evaluation['Interview Date'])}</div>
         </div>
-        {!excludeForPdf && (
-          <div className="data">
+        <div className="data">
+          <div className="logo-placeholder">
+            <img src={logo} alt="zeero-logo" style={{ width: '100px', height: 'auto', border: 'none', outline: 'none', boxShadow: 'none' }} />
+          </div>
+          {!excludeForPdf && (
             <button className="download" onClick={handleGeneratePdf}>
               DOWNLOAD
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* User Details */}
-      {/* <Box sx={{ mb: 4, mt: 4, pageBreakAfter: 'always' }}>
-        <Typography
-          variant="h6"
-          sx={{
-            color: '#0B52D4',
-            fontFamily: 'Poppins',
-            fontSize: '18px',
-            fontWeight: 700,
-            mb: 2,
-            borderBottom: '2px solid #0B52D420',
-            pb: 1,
-          }}
-        >
-          User Details
-        </Typography>
-        <Box sx={{ pl: 3 }}>
-          <Typography sx={{ fontFamily: 'Poppins', fontSize: '14px', fontWeight: 600, mb: 1 }}>
-            Candidate: {evaluation['Candidate Name'] || 'Unknown'}
-          </Typography>
-          <Typography sx={{ fontFamily: 'Poppins', fontSize: '14px', fontWeight: 600, mb: 1 }}>
-            Role: {evaluation.Role || 'N/A'}
-          </Typography>
-          <Typography sx={{ fontFamily: 'Poppins', fontSize: '14px', fontWeight: 600, mb: 1 }}>
-            Interview Date: {formatDate(evaluation['Interview Date'])}
-          </Typography>
-        </Box>
-      </Box> */}
-
       {/* Summary */}
-      <div className="summary-wrapper" style={{ pageBreakAfter: 'always' }}>
+      <div className="summary-wrapper" style={{ pageBreakAfter: 'always', textAlign: 'left' }}>
         <div className="summary-row">
-          <Typography className="summary-title">Summary</Typography>
+          <Typography className="summary-title" sx={{ display: 'inline-block', color: '#000000' }}>
+            Summary
+          </Typography>
         </div>
         <div className="summary-row">
-          <Typography sx={{ fontFamily: 'Poppins', fontSize: '14px', color: '#4F4F4F' }}>
+          <Typography sx={{ fontFamily: 'Poppins', fontSize: '14px', color: '#4F4F4F', textAlign: 'justify', display: 'inline-block', width: '80%' }}>
             {evaluation.Summary || 'No summary provided'}
           </Typography>
         </div>
       </div>
 
       {/* Core Competencies */}
-      <Box sx={{ mb: 4, pageBreakAfter: 'always' }}>
-        <ReportCard
-          title="Core Competencies"
-          items={strengths}
-          titleColor="#4CAF50"
-        />
+      <Box sx={{ mb: 4, pageBreakAfter: 'always', textAlign: 'left' }}>
+        <Typography
+          variant="h6"
+          sx={{
+            color: '#000000',
+            fontFamily: 'Poppins',
+            fontSize: '18px',
+            fontWeight: 700,
+            mb: 2,
+            display: 'inline-block',
+          }}
+        >
+          Core Competencies
+        </Typography>
+        <Box
+          sx={{
+            borderRadius: '8px',
+            border: '1px solid #E0E0E0',
+            background: '#FFF',
+            p: 3,
+            boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
+            pageBreakInside: 'avoid'
+          }}
+        >
+          <Box component="ul" sx={{ pl: 3, m: 0, textAlign: 'left', display: 'inline-block', width: '80%' }}>
+            {strengths.map((item, index) => (
+              <li key={index} style={{ marginBottom: '12px', pageBreakInside: 'avoid' }}>
+                <Typography
+                  sx={{
+                    color: '#4F4F4F',
+                    fontFamily: 'Poppins',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    lineHeight: '24px',
+                    textAlign: 'justify',
+                  }}
+                >
+                  {item}
+                </Typography>
+              </li>
+            ))}
+          </Box>
+        </Box>
       </Box>
 
       {/* Potential Development Areas */}
-      <Box sx={{ mb: 4, pageBreakAfter: 'always' }}>
-        <ReportCard
-          title="Potential Development Areas"
-          items={areasForImprovement}
-          titleColor="#F44336"
-        />
+      <Box sx={{ mb: 4, pageBreakAfter: 'always', textAlign: 'left' }}>
+        <Typography
+          variant="h6"
+          sx={{
+            color: '#000000',
+            fontFamily: 'Poppins',
+            fontSize: '18px',
+            fontWeight: 700,
+            mb: 2,
+            display: 'inline-block',
+          }}
+        >
+          Potential Development Areas
+        </Typography>
+        <Box
+          sx={{
+            borderRadius: '8px',
+            border: '1px solid #E0E0E0',
+            background: '#FFF',
+            p: 3,
+            boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
+            pageBreakInside: 'avoid'
+          }}
+        >
+          <Box component="ul" sx={{ pl: 3, m: 0, textAlign: 'left', display: 'inline-block', width: '80%' }}>
+            {areasForImprovement.map((item, index) => (
+              <li key={index} style={{ marginBottom: '12px', pageBreakInside: 'avoid' }}>
+                <Typography
+                  sx={{
+                    color: '#4F4F4F',
+                    fontFamily: 'Poppins',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    lineHeight: '24px',
+                    textAlign: 'justify',
+                  }}
+                >
+                  {item}
+                </Typography>
+              </li>
+            ))}
+          </Box>
+        </Box>
       </Box>
 
       {/* Technical Skills Evaluation */}
       {technicalSkillsPages.map((pageSkills, pageIndex) => (
-        <Box key={`tech-page-${pageIndex}`} sx={{ mb: 4, pageBreakAfter: pageIndex < technicalSkillsPages.length - 1 ? 'always' : 'auto' }}>
+        <Box 
+          key={`tech-page-${pageIndex}`} 
+          sx={{ 
+            mb: 4, 
+            pageBreakAfter: pageIndex < technicalSkillsPages.length - 1 ? 'always' : 'auto', 
+            textAlign: 'center',
+            pageBreakInside: 'avoid'
+          }}
+        >
           <Typography
             variant="h6"
             sx={{
@@ -162,92 +233,144 @@ const ReportGenerator = ({ evaluation }) => {
               mb: 2,
               borderBottom: '2px solid #4CAF5020',
               pb: 1,
+              display: 'inline-block',
             }}
           >
             Technical Skills Evaluation {technicalSkillsPages.length > 1 ? `(${pageIndex + 1})` : ''}
           </Typography>
-          <Grid container spacing={2}>
-            {pageSkills.map((item, index) => {
-              const globalIndex = pageIndex * 8 + index + 1;
-              const { label, color } = ratingLabels[item.rating] || { label: 'N/A', color: '#9E9E9E' };
-              return (
-                <Grid item xs={12} sm={6} md={3} key={index}>
-                  <Card
-                    sx={{
-                      padding: 2,
-                      paddingTop: 4,
-                      borderRadius: '10px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      position: 'relative',
-                      minHeight: '220px',
-                      height: '100%',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        backgroundColor: '#0B52D4',
-                        color: '#fff',
-                        borderRadius: '0px 0px 8px 0px',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        px: 1.5,
-                        py: 0.5,
-                      }}
-                    >
-                      {globalIndex}
-                    </Box>
-                    <Typography
-                      variant="h6"
-                      fontWeight={600}
-                      sx={{ fontFamily: 'Poppins', mt: 3, fontSize: '16px' }}
-                    >
-                      {item.Section || 'Unnamed Skill'}
-                    </Typography>
-                    <Typography sx={{ color, fontWeight: 600, mb: 1, fontFamily: 'Poppins', fontSize: '14px' }}>
-                      {label}
-                    </Typography>
-                    <Slider
-                      value={item.rating}
-                      max={5}
-                      min={1}
-                      step={1}
-                      disabled
-                      sx={{
-                        color: color,
-                        height: 10,
-                        '& .MuiSlider-thumb': {
-                          width: 20,
-                          height: 20,
-                          backgroundColor: '#fff',
-                          border: `3px solid ${color}`,
-                        },
-                        '& .MuiSlider-track': {
-                          backgroundColor: color,
-                          border: 'none',
-                        },
-                        '& .MuiSlider-rail': {
-                          backgroundColor: '#e0e0e0',
-                        },
-                      }}
-                    />
-                    <Typography variant="body2" mt={2} sx={{ fontFamily: 'Poppins', fontSize: '14px' }}>
-                      {item.comments || item.evidence || 'No details'}
-                    </Typography>
-                  </Card>
-                </Grid>
-              );
-            })}
-          </Grid>
+          <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0 auto', pageBreakInside: 'avoid' }}>
+            <tbody>
+              {Array.from({ length: Math.ceil(pageSkills.length / 2) }, (_, rowIndex) => {
+                const rowSkills = pageSkills.slice(rowIndex * 2, rowIndex * 2 + 2);
+                if (rowSkills.length === 0) return null;
+                
+                return (
+                  <tr key={rowIndex} style={{ pageBreakInside: 'avoid' }}>
+                    {rowSkills.map((item, colIndex) => {
+                      const index = rowIndex * 2 + colIndex;
+                      const globalIndex = pageIndex * 10 + index + 1;
+                      // Ensure rating is a valid number between 1 and 5
+                      const rating = Math.min(Math.max(Number(item.rating) || 3, 1), 5);
+                      const { label, color } = ratingLabels[rating] || { label: 'Average', color: '#FF9C2C' }; // Default to 3 if invalid
+                      const lines = splitIntoLines(item.comments || item.evidence || '');
+                      
+                      return (
+                        <td
+                          key={index}
+                          style={{
+                            width: '50%',
+                            padding: '16px',
+                            verticalAlign: 'top',
+                            border: excludeForPdf ? 'none' : '1px solid #e0e0e0',
+                            boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+                            backgroundColor: '#fff',
+                            minHeight: '220px',
+                            pageBreakInside: 'avoid',
+                          }}
+                        >
+                          <Box sx={{ position: 'relative', height: '100%' }}>
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                backgroundColor: '#0B52D4',
+                                color: '#fff',
+                                borderRadius: '0px 0px 8px 0px',
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                px: 1.5,
+                                py: 0.5,
+                              }}
+                            >
+                              {globalIndex}
+                            </Box>
+                            <Typography
+                              variant="h6"
+                              fontWeight={600}
+                              sx={{ fontFamily: 'Poppins', mt: 3, fontSize: '16px', textAlign: 'center' }}
+                            >
+                              {item.Section}
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                              <Typography sx={{
+                                color,
+                                fontWeight: 600,
+                                fontFamily: 'Poppins',
+                                fontSize: '14px',
+                                backgroundColor: `${color}20`,
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                textAlign: 'center',
+                              }}>
+                                {label}
+                              </Typography>
+                              <Slider
+                                value={rating}
+                                max={5}
+                                min={1}
+                                step={1}
+                                disabled
+                                sx={{
+                                  color: color,
+                                  height: 10,
+                                  width: '60%',
+                                  '& .MuiSlider-thumb': {
+                                    width: 20,
+                                    height: 20,
+                                    backgroundColor: '#fff',
+                                    border: `3px solid ${color}`,
+                                  },
+                                  '& .MuiSlider-track': {
+                                    backgroundColor: color,
+                                    border: 'none',
+                                  },
+                                  '& .MuiSlider-rail': {
+                                    backgroundColor: '#e0e0e0',
+                                  },
+                                }}
+                              />
+                            </Box>
+                            <Box sx={{ mt: 2, textAlign: 'left', backgroundColor: '#F8F9FA', padding: '12px', borderRadius: '4px', minHeight: '80px' }}>
+                              {lines.map((line, idx) => (
+                                <Typography
+                                  key={idx}
+                                  variant="body2"
+                                  sx={{ 
+                                    fontFamily: 'Poppins', 
+                                    fontSize: '14px', 
+                                    textAlign: 'justify', 
+                                    marginBottom: idx < lines.length - 1 ? '8px' : 0,
+                                    wordBreak: 'break-word'
+                                  }}
+                                >
+                                  {line}
+                                </Typography>
+                              ))}
+                            </Box>
+                          </Box>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </Box>
       ))}
 
       {/* Soft Skills Evaluation */}
       {softSkillsPages.map((pageSkills, pageIndex) => (
-        <Box key={`soft-page-${pageIndex}`} sx={{ mb: 4, pageBreakAfter: pageIndex < softSkillsPages.length - 1 ? 'always' : 'auto' }}>
+        <Box 
+          key={`soft-page-${pageIndex}`} 
+          sx={{ 
+            mb: 4, 
+            pageBreakAfter: pageIndex < softSkillsPages.length - 1 ? 'always' : 'auto', 
+            textAlign: 'center',
+            pageBreakInside: 'avoid'
+          }}
+        >
           <Typography
             variant="h6"
             sx={{
@@ -258,148 +381,133 @@ const ReportGenerator = ({ evaluation }) => {
               mb: 2,
               borderBottom: '2px solid #4CAF5020',
               pb: 1,
+              display: 'inline-block',
             }}
           >
             Soft Skills Evaluation {softSkillsPages.length > 1 ? `(${pageIndex + 1})` : ''}
           </Typography>
-          <Grid container spacing={2}>
-            {pageSkills.map((item, index) => {
-              const globalIndex = pageIndex * 8 + index + 1;
-              const { label, color } = ratingLabels[item.rating] || { label: 'N/A', color: '#9E9E9E' };
-              return (
-                <Grid item xs={12} sm={6} md={3} key={index}>
-                  <Card
-                    sx={{
-                      padding: 2,
-                      paddingTop: 4,
-                      borderRadius: '10px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      position: 'relative',
-                      minHeight: '220px',
-                      height: '100%',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        backgroundColor: '#0B52D4',
-                        color: '#fff',
-                        borderRadius: '0px 0px 8px 0px',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        px: 1.5,
-                        py: 0.5,
-                      }}
-                    >
-                      {globalIndex}
-                    </Box>
-                    <Typography
-                      variant="h6"
-                      fontWeight={600}
-                      sx={{ fontFamily: 'Poppins', mt: 3, fontSize: '16px' }}
-                    >
-                      {item.Section || 'Unnamed Skill'}
-                    </Typography>
-                    <Typography sx={{ color, fontWeight: 600, mb: 1, fontFamily: 'Poppins', fontSize: '14px' }}>
-                      {label}
-                    </Typography>
-                    <Slider
-                      value={item.rating}
-                      max={5}
-                      min={1}
-                      step={1}
-                      disabled
-                      sx={{
-                        color: color,
-                        height: 10,
-                        '& .MuiSlider-thumb': {
-                          width: 20,
-                          height: 20,
-                          backgroundColor: '#fff',
-                          border: `3px solid ${color}`,
-                        },
-                        '& .MuiSlider-track': {
-                          backgroundColor: color,
-                          border: 'none',
-                        },
-                        '& .MuiSlider-rail': {
-                          backgroundColor: '#e0e0e0',
-                        },
-                      }}
-                    />
-                    <Typography variant="body2" mt={2} sx={{ fontFamily: 'Poppins', fontSize: '14px' }}>
-                      {item.evidence || item.comments || 'No details'}
-                    </Typography>
-                  </Card>
-                </Grid>
-              );
-            })}
-          </Grid>
+          <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0 auto', pageBreakInside: 'avoid' }}>
+            <tbody>
+              {Array.from({ length: Math.ceil(pageSkills.length / 2) }, (_, rowIndex) => {
+                const rowSkills = pageSkills.slice(rowIndex * 2, rowIndex * 2 + 2);
+                if (rowSkills.length === 0) return null;
+                
+                return (
+                  <tr key={rowIndex} style={{ pageBreakInside: 'avoid' }}>
+                    {rowSkills.map((item, colIndex) => {
+                      const index = rowIndex * 2 + colIndex;
+                      const globalIndex = pageIndex * 4 + index + 1;
+                      // Ensure rating is a valid number between 1 and 5
+                      const rating = Math.min(Math.max(Number(item.rating) || 3, 1), 5);
+                      const { label, color } = ratingLabels[rating] || { label: 'Average', color: '#FF9C2C' }; // Default to 3 if invalid
+                      const lines = splitIntoLines(item.evidence || item.comments || '');
+                      
+                      return (
+                        <td
+                          key={index}
+                          style={{
+                            width: '50%',
+                            padding: '16px',
+                            verticalAlign: 'top',
+                            border: excludeForPdf ? 'none' : '1px solid #e0e0e0',
+                            boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+                            backgroundColor: '#fff',
+                            minHeight: '220px',
+                            pageBreakInside: 'avoid',
+                          }}
+                        >
+                          <Box sx={{ position: 'relative', height: '100%' }}>
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                backgroundColor: '#0B52D4',
+                                color: '#fff',
+                                borderRadius: '0px 0px 8px 0px',
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                px: 1.5,
+                                py: 0.5,
+                              }}
+                            >
+                              {globalIndex}
+                            </Box>
+                            <Typography
+                              variant="h6"
+                              fontWeight={600}
+                              sx={{ fontFamily: 'Poppins', mt: 3, fontSize: '16px', textAlign: 'center' }}
+                            >
+                              {item.Section}
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                              <Typography sx={{
+                                color,
+                                fontWeight: 600,
+                                fontFamily: 'Poppins',
+                                fontSize: '14px',
+                                backgroundColor: `${color}20`,
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                textAlign: 'center',
+                              }}>
+                                {label}
+                              </Typography>
+                              <Slider
+                                value={rating}
+                                max={5}
+                                min={1}
+                                step={1}
+                                disabled
+                                sx={{
+                                  color: color,
+                                  height: 10,
+                                  width: '60%',
+                                  '& .MuiSlider-thumb': {
+                                    width: 20,
+                                    height: 20,
+                                    backgroundColor: '#fff',
+                                    border: `3px solid ${color}`,
+                                  },
+                                  '& .MuiSlider-track': {
+                                    backgroundColor: color,
+                                    border: 'none',
+                                  },
+                                  '& .MuiSlider-rail': {
+                                    backgroundColor: '#e0e0e0',
+                                  },
+                                }}
+                              />
+                            </Box>
+                            <Box sx={{ mt: 2, textAlign: 'left', backgroundColor: '#F8F9FA', padding: '12px', borderRadius: '4px', minHeight: '80px' }}>
+                              {lines.map((line, idx) => (
+                                <Typography
+                                  key={idx}
+                                  variant="body2"
+                                  sx={{ 
+                                    fontFamily: 'Poppins', 
+                                    fontSize: '14px', 
+                                    textAlign: 'justify', 
+                                    marginBottom: idx < lines.length - 1 ? '8px' : 0,
+                                    wordBreak: 'break-word'
+                                  }}
+                                >
+                                  {line}
+                                </Typography>
+                              ))}
+                            </Box>
+                          </Box>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </Box>
       ))}
-
-      {/* Overall Comment */}
-      {/* <div className="summary-wrapper">
-        <div className="summary-row">
-          <Typography className="summary-title summary-title2">Overall Comment</Typography>
-          <Typography className="summary-comments">
-            {evaluation.Comments || 'No comments provided'}
-          </Typography>
-        </div>
-      </div> */}
     </div>
-  );
-};
-
-// ReportCard component
-const ReportCard = ({ title, items, titleColor }) => {
-  if (!items || items.length === 0) return null;
-
-  return (
-    <Box
-      sx={{
-        borderRadius: '8px',
-        border: '1px solid #E0E0E0',
-        background: '#FFF',
-        p: 3,
-        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
-      }}
-    >
-      <Typography
-        variant="h6"
-        sx={{
-          color: titleColor,
-          fontFamily: 'Poppins',
-          fontSize: '18px',
-          fontWeight: 700,
-          mb: 2,
-          borderBottom: `2px solid ${titleColor}20`,
-          pb: 1,
-        }}
-      >
-        {title}
-      </Typography>
-      <Box component="ul" sx={{ pl: 3, m: 0 }}>
-        {items.map((item, index) => (
-          <li key={index} style={{ marginBottom: '12px' }}>
-            <Typography
-              sx={{
-                color: '#4F4F4F',
-                fontFamily: 'Poppins',
-                fontSize: '14px',
-                fontWeight: 600,
-                lineHeight: '24px',
-              }}
-            >
-              {item}
-            </Typography>
-          </li>
-        ))}
-      </Box>
-    </Box>
   );
 };
 

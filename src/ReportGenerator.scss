@@ -7,7 +7,6 @@
 .dev-report-header-container {
   display: flex;
   justify-content: space-between;
-  position: sticky;
   top: 50px;
   padding-top: 15px;
   padding-bottom: 10px;
@@ -48,6 +47,23 @@
 
   .data {
     text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+
+    .logo-placeholder {
+      width: 100px;
+      height: auto; /* Adjusted to respect image's natural height */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* Removed border and background to ensure clean logo display */
+      border: none;
+      background-color: transparent;
+      color: transparent; /* Hide placeholder text */
+      font-size: 0; /* Hide placeholder text */
+    }
 
     .download {
       background: inherit;
@@ -97,4 +113,36 @@
       line-height: 24px;
       flex: 1;
     }
-    }}
+  }
+}
+
+// For PDF specific styling
+@media print {
+  .report-container {
+    padding: 0;
+  }
+  
+  .dev-report-header-container {
+    position: relative;
+    top: 0;
+    padding-top: 0;
+    margin-top: 0;
+    
+    .data {
+      .download {
+        display: none;
+      }
+      
+      .logo-placeholder {
+        /* Ensure logo remains visible and clean in PDF */
+        border: none;
+        background-color: transparent;
+      }
+    }
+  }
+  
+  // Ensure proper page breaks
+  .page-break {
+    page-break-after: always;
+  }
+}
