@@ -1,0 +1,164 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background-color: #f5f5f5;
+}
+
+.app-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+}
+
+.input-container {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #555;
+}
+
+input[type="file"],
+input[type="date"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.error {
+  color: red;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.report-container {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fafafa;
+}
+
+.report-container h2 {
+  color: #333;
+}
+
+.pdf-content {
+  padding: 20px;
+  background-color: white;
+}
+
+.report-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 20px;
+}
+
+.personal {
+  display: flex;
+  flex-direction: column;
+}
+
+.name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.submit {
+  font-size: 14px;
+  color: #555;
+  margin-top: 5px;
+}
+
+.date {
+  font-size: 14px;
+  color: #333;
+}
+
+.data {
+  display: flex;
+  align-items: center;
+}
+
+.download {
+  padding: 8px 16px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.download:hover {
+  background-color: #218838;
+}
+
+.report-body {
+  padding: 20px;
+}
+
+.report-logo {
+  display: block;
+  margin: 0 auto 20px;
+  width: 200px;
+  height: 100px;
+}
+
+.report-body h1 {
+  text-align: center;
+  font-size: 24px;
+  color: #333;
+}
+
+.report-body h2 {
+  font-size: 18px;
+  color: #555;
+  margin-top: 20px;
+}
+
+.report-body p {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.6;
+}

@@ -1,0 +1,100 @@
+/* ReportGenerator.scss */
+.report-container {
+  padding: 20px;
+  background-color: #f3f5f7;
+}
+
+.dev-report-header-container {
+  display: flex;
+  justify-content: space-between;
+  position: sticky;
+  top: 50px;
+  padding-top: 15px;
+  padding-bottom: 10px;
+  background-color: #f3f5f7;
+  z-index: 11;
+  margin-top: 44px;
+
+  .personal {
+    .name {
+      color: #0b52d4;
+      font-family: "Poppins";
+      font-size: 20px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: 140%;
+    }
+
+    .submit {
+      color: #4f4f4f;
+      font-family: "Poppins";
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: normal;
+      margin-top: 20px;
+    }
+
+    .date {
+      color: #212121;
+      margin-top: 10px;
+      font-family: "Poppins";
+      font-size: 18px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: normal;
+    }
+  }
+
+  .data {
+    text-align: right;
+
+    .download {
+      background: inherit;
+      border-radius: 4px;
+      border: 1px solid #062b6e;
+      color: #062b6e;
+      font-family: "Poppins";
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 500;
+      padding: 5px 10px;
+      line-height: 20px;
+      cursor: pointer;
+    }
+  }
+}
+
+.summary-wrapper {
+  margin-bottom: 32px;
+
+  .summary-row {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+
+    .summary-title {
+      color: #111;
+      font-family: "Poppins";
+      font-size: 18px;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 140%;
+      margin-right: 16px;
+    }
+
+    .summary-title2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .summary-comments {
+      color: #4f4f4f;
+      font-family: "Poppins";
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 24px;
+      flex: 1;
+    }
+    }}
