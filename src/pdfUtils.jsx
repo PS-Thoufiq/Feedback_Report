@@ -98,11 +98,26 @@ export const evaluateWithOpenAI = async (text, interviewDate) => {
   "Candidate Name": "<Full Name>",
   "Role": "<Job Title>",
   "Interview Date": "${interviewDate || '2025-07-23'}",
-  "Summary": "<200+ word summary starting with '{Name}, evaluated on {Month DD, YYYY} is a...'>",
-  "Strengths": ["<Point 1>", "<Point 2>"],
-  "Areas for Improvement": ["<Point 1>", "<Point 2>"],
-  "Technical Skills": [{"Section": "<Skill>", "rating": <1-5>, "comments": "<Evidence>3 lines"}],
-  "Soft Skills": [{"Section": "<Skill>", "rating": <1-5>, "evidence": "<Evidence> 3 lines "}]
+  "Summary": "[200 to 300 words]<Start with '{Name}, evaluated on {Month DD, YYYY} is a...' where {Name} is the candidate's full name and {Month DD, YYYY} is the interview date from the feedback. Follow with a minimum of 200 words summary of performance. Use the exact date from the feedback, not the current date. Example: 'John Doe, evaluated on July 23, 2025 is a...'>",
+  "Strengths": [//6 to 10 points with {Strength Area:Description} format
+    "<Point Title(Strength name) : Specific strength with evidence from feedback>"
+  ],
+  "Areas for Improvement": [//6 to 10 points with {Area Name:Description} format
+    "<Point title(Area name to improve): Specific area needing improvement with evidence>"
+  ],
+  "Technical Skills": [//6 to 10 skills with {Section:Skill Name, rating:Skill rating from 1-5 based on demonstrated ability in feedback, comments:25-35 words on how this skill was demonstrated in the interview} format
+    {
+      "Section": "<Skill Name>",
+      "rating": "Skill rating from 1-5 based on demonstrated ability in feedback",
+      "comments": "25-35 words on how each skill was demonstrated in the interview",
+    }
+  ],
+  "Soft Skills": [//6 to 10 skills with {Section:Skill Name, rating:Skill rating from 1-5 based on demonstrated ability in feedback, evidence:25-35 words on how this skill was demonstrated in the interview} format
+    {
+      "Section": "<Skill Name>",
+      "rating": "Skill rating from 1-5 based on demonstrated ability in feedback",
+      "evidence": "<25-35 words on how each skill was demonstrated in the interview>"
+    }]
 }
 Feedback:
 ${text}`
